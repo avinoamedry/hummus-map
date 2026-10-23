@@ -101,6 +101,8 @@ export function normalizePlace(row, geomCol, warn) {
   for (const f of [...PLACE_FIELDS, ...OPTIONAL_FIELDS]) p[f] = row[f] === undefined ? null : row[f];
   for (const f of Object.keys(p)) if (typeof p[f] === 'string') p[f] = str(p[f]);
   for (const f of BOOL_FIELDS) p[f] = toBool(p[f]);
+  // כל מקום במפה מגיש חומוס כבסיס, בלי קשר לערך בשדה
+  p.serves_hummus = true;
   p.score = blank(p.score) || Number.isNaN(Number(p.score)) ? null : Number(p.score);
   p.start_year = blank(p.start_year) ? null : parseInt(p.start_year, 10) || null;
   p.place_id = blank(p.place_id) ? null : Number(p.place_id);
@@ -121,10 +123,12 @@ export function normalizePlace(row, geomCol, warn) {
   return p;
 }
 
-/** כלל הפרסום מסעיף 4.3 (ו-status אם קיים). */
+// ערכי status שמסתירים מקום מהאתר. כל ערך אחר, או שדה ריק, מפרסם אותו
+export const HIDDEN_STATUSES = ['closed', 'hidden'];
+
+/** כל מקום מתפרסם, גם בלי ציון, אלא אם status מסתיר אותו. */
 export function isPublished(p) {
-  if (p.status) return p.status.toLowerCase() === 'published';
-  return p.serves_hummus && p.score !== null;
+  return !(p.status && HIDDEN_STATUSES.includes(p.status.toLowerCase()));
 }
 
 /**

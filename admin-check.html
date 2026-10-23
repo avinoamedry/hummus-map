@@ -52,9 +52,9 @@
     <table><thead><tr><th>חומרה</th><th>מקום</th><th>בעיה</th><th>ערך</th></tr></thead><tbody id="issues"></tbody></table>
   </section>
   <section id="candidatesSection" hidden>
-    <h2>מקומות שלא מוצגים באתר</h2>
-    <p class="muted">מוצגים רק מקומות עם <code class="ltr">serves_hummus = 1</code> ו-<code class="ltr">score</code> מלא. אפשר לראות את כולם באתר עם <a href="./?debug=1">?debug=1</a>.</p>
-    <table><thead><tr><th>place_id</th><th>שם</th><th>עיר</th><th>חסר</th></tr></thead><tbody id="candidates"></tbody></table>
+    <h2>מקומות מוסתרים</h2>
+    <p class="muted">כל מקום מוצג באתר, גם בלי ציון. מקום מוסתר רק כשבשדה <code class="ltr">status</code> כתוב <code class="ltr">closed</code> או <code class="ltr">hidden</code>. אפשר לראות גם אותם באתר עם <a href="./?debug=1">?debug=1</a>.</p>
+    <table><thead><tr><th>place_id</th><th>שם</th><th>עיר</th><th>status</th></tr></thead><tbody id="candidates"></tbody></table>
   </section>
 </main>
 <script type="module">
@@ -114,6 +114,7 @@ async function run() {
     }
     if (!p.country) add('info', p, 'חסר country (קוד מדינה בשתי אותיות). השעות והחגים מחושבים לפי הערכה מהקואורדינטות.');
     if (p.score !== null && (p.score < 0 || p.score > 5)) add('error', p, 'ציון מחוץ לטווח 0–5', p.score);
+    if (p.score === null && isPublished(p)) add('info', p, 'עדיין אין ציון. באתר יוצג "Not rated yet", והמקום יופיע אחרי המקומות שקיבלו ציון.');
     if (p.opening_hours) {
       const h = parseHours(p.opening_hours, p);
       if (h.error) add('error', p, `שעות לא תקינות לפי תחביר OSM. באתר יוצג "Hours not available". פירוט: ${h.error}`, p.opening_hours);
@@ -174,9 +175,8 @@ async function run() {
 
   const hidden = places.filter((p) => !isPublished(p));
   $('#candidates').innerHTML = hidden.map((p) => {
-    const missing = p.status ? [`status = ${p.status}`] : [!p.serves_hummus && 'serves_hummus', p.score === null && 'score'].filter(Boolean);
-    return `<tr><td>${p.place_id ?? '—'}</td><td dir="auto"><a href="./?debug=1#/place/${encodeURIComponent(p.slug || '')}">${esc(p.name || p.name_en)}</a></td><td dir="auto">${esc(p.addr_city || '')}</td><td><code>${esc(missing.join(', '))}</code></td></tr>`;
-  }).join('') || '<tr><td colspan="4">כל המקומות מוצגים</td></tr>';
+    return `<tr><td>${p.place_id ?? '—'}</td><td dir="auto"><a href="./?debug=1#/place/${encodeURIComponent(p.slug || '')}">${esc(p.name || p.name_en)}</a></td><td dir="auto">${esc(p.addr_city || '')}</td><td><code>${esc(p.status)}</code></td></tr>`;
+  }).join('') || '<tr><td colspan="4">אין מקומות מוסתרים. כל המקומות מוצגים באתר.</td></tr>';
   $('#candidatesSection').hidden = false;
 }
 run();

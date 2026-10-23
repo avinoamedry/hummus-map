@@ -91,8 +91,8 @@ export const i18n = {
     locationDenied: 'Location is not available',
     about: 'About',
     aboutText: 'Hand-picked hummus places across Europe, scored by our team.',
-    debug: 'Debug mode: showing unpublished places',
-    unpublished: 'Unpublished',
+    debug: 'Debug mode: also showing hidden places (status closed/hidden)',
+    unpublished: 'Hidden',
     zoomCluster: (n) => `${n} places, zoom in`,
   },
 };

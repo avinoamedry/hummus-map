@@ -53,7 +53,12 @@ test('readGpkg returns places, kashrut codes and photos', () => {
   assert.deepEqual(Object.keys(kashrutTypes).sort(), ['badatz', 'none', 'private', 'rabbanut', 'rabbanut_mehadrin', 'unknown']);
   const kafka = places.find((p) => p.slug === 'kafka-hummus-cafe');
   assert.deepEqual(kafka.lonlat, [14.418658, 50.089096]);
-  assert.equal(isPublished(kafka), false, 'no score yet, so not published');
+  assert.equal(kafka.score, null);
+  assert.equal(isPublished(kafka), true, 'published without a score');
+  assert.equal(kafka.serves_hummus, true, 'every place serves hummus');
+  assert.equal(isPublished({ ...kafka, status: 'closed' }), false);
+  assert.equal(isPublished({ ...kafka, status: 'Hidden' }), false);
+  assert.equal(isPublished({ ...kafka, status: 'candidate' }), true);
   assert.deepEqual(warnings, []);
 });
 

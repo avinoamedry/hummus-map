@@ -21,6 +21,8 @@ const DEFAULT_CONFIG = {
   data_url: 'data/hummus_app.gpkg',
 };
 const DISHES = { hummus: 'serves_hummus', ful: 'serves_ful', mushrooms: 'serves_mushrooms' };
+// חומוס מוגש בכל מקום, ולכן הוא לא אפשרות סינון
+const FILTER_DISHES = { ful: 'serves_ful', mushrooms: 'serves_mushrooms' };
 const DIETS = { vegan: 'diet_vegan', vegetarian: 'diet_vegetarian', kosher: 'diet_kosher', halal: 'diet_halal', gluten_free: 'diet_gluten_free' };
 const SAVED_KEY = 'hummusmap:saved';
 const wide = window.matchMedia('(min-width: 900px)');
@@ -63,6 +65,11 @@ function address(p, withNeighbourhood = false) {
 }
 
 const scoreText = (p) => (p.score !== null ? p.score.toFixed(1) : '–');
+
+function scoreBadge(p) {
+  if (p.score === null) return `<div class="card-score unrated">${t.noScore}</div>`;
+  return `<div class="card-score" role="img" aria-label="${esc(t.scoreAria(scoreText(p)))}">${ICON.star(18, 'currentColor')}<span aria-hidden="true">${scoreText(p)}</span></div>`;
+}
 
 function dietBadges(p) {
   return DIET_FIELDS.filter((f) => p[f] === 'yes' || p[f] === 'only').map((f) => t.diet[f][p[f] === 'only' ? 1 : 0]);
@@ -171,7 +178,7 @@ function queryToFilters(qs) {
   const list = (k, allowed) => new Set((q.get(k) || '').split(',').filter((v) => v in allowed));
   return {
     q: q.get('q') || '',
-    dish: list('dish', DISHES),
+    dish: list('dish', FILTER_DISHES),
     diet: list('diet', DIETS),
     open: q.get('open') === '1',
     min: Math.min(5, Math.max(0, parseFloat(q.get('min')) || 0)),
@@ -258,7 +265,7 @@ function cardHtml(p, now, index = 99) {
   <div class="card-body">
     <div class="card-head">
       <h2 class="card-name" dir="auto">${esc(displayName(p))}</h2>
-      <div class="card-score" role="img" aria-label="${esc(t.scoreAria(scoreText(p)))}">${ICON.star(18, 'currentColor')}<span aria-hidden="true">${scoreText(p)}</span></div>
+      ${scoreBadge(p)}
     </div>
     ${address(p) ? `<div class="addr" dir="auto">${esc(address(p))}</div>` : ''}
     ${dishes ? `<div class="tags">${dishes}</div>` : ''}
@@ -352,9 +359,11 @@ function renderPlace(slug) {
   <div class="section">
     <div class="title-row">
       <h1 class="place-name" dir="auto" tabindex="-1" id="placeTitle">${esc(displayName(p))}</h1>
-      <div class="score-box ${p.score === null ? 'none' : ''}" role="img" aria-label="${esc(t.scoreAria(scoreText(p)))}">
+      ${p.score === null
+        ? `<div class="score-box none"><div class="lbl">${t.score}</div><div class="unrated-lbl">${t.noScore}</div></div>`
+        : `<div class="score-box" role="img" aria-label="${esc(t.scoreAria(scoreText(p)))}">
         <div class="num" aria-hidden="true">${ICON.star(18, '#FFFFFF')}${scoreText(p)}</div><div class="lbl" aria-hidden="true">${t.score}</div>
-      </div>
+      </div>`}
     </div>
     ${p.name_he && !displayName(p).includes(p.name_he) ? `<div class="since" lang="he" dir="rtl">${esc(p.name_he)}</div>` : ''}
     ${address(p, true) ? `<div class="place-addr">${ICON.pin}<span dir="auto">${esc(address(p, true))}</span></div>` : ''}
@@ -458,7 +467,7 @@ function showMapCard(id) {
   const now = new Date();
   els.mapCard.innerHTML = `<a href="#/place/${encodeURIComponent(p.slug)}">
     <div class="card-head"><h2 class="card-name" dir="auto">${esc(displayName(p))}</h2>
-    <div class="card-score" role="img" aria-label="${esc(t.scoreAria(scoreText(p)))}">${ICON.star(18, 'currentColor')}<span aria-hidden="true">${scoreText(p)}</span></div></div>
+    ${scoreBadge(p)}</div>
     ${address(p) ? `<div class="addr" dir="auto">${esc(address(p))}</div>` : ''}
     <div>${hoursBadge(p, now, 'static')}</div>
   </a><button type="button" class="icon-btn" id="mapCardClose" aria-label="${t.close}">${ICON.close}</button>`;
@@ -478,7 +487,7 @@ function optHtml(name, value, label, checked) {
 
 function openFilters() {
   const f = state.filters;
-  $('#fDishes').innerHTML = Object.keys(DISHES).map((d) => optHtml('dish', d, t.dishes[d], f.dish.has(d))).join('');
+  $('#fDishes').innerHTML = Object.keys(FILTER_DISHES).map((d) => optHtml('dish', d, t.dishes[d], f.dish.has(d))).join('');
   $('#fDiet').innerHTML = Object.entries(DIETS).map(([k, field]) => optHtml('diet', k, t.diet[field][0], f.diet.has(k))).join('');
   $('#fOpen').innerHTML = optHtml('open', '1', t.openNow, f.open);
   $('#fMin').value = f.min;

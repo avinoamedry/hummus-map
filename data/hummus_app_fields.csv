@@ -8,12 +8,12 @@ hummus_places,addr_city,str,addr:city,שורת כתובת,חובה,OSM,
 hummus_places,addr_street,str,addr:street,שורת כתובת,חובה,OSM,
 hummus_places,addr_housenumber,str,addr:housenumber,שורת כתובת,חובה,OSM,טקסט (12א)
 hummus_places,addr_neighbourhood,str,addr:suburb,שכונה בדף המקום,מומלץ,OSM / חיתוך מרחבי,
-hummus_places,score,float,—,ציון בכרטיס ובדף (Moody's score),חובה,ידני,"ציון הצוות, 0.0–5.0"
+hummus_places,score,float,—,ציון בכרטיס ובדף (Moody's score),מומלץ,ידני,"ציון הצוות, 0.0–5.0"
 hummus_places,score_date,date,—,—,מומלץ,ידני,מועד מתן הציון
 hummus_places,reviewer_note,str,—,ציטוט בדף המקום,מומלץ,ידני,
 hummus_places,tagline,str,description,שורת רקע בדף המקום,רשות,ידני,
 hummus_places,start_year,int,start_date,Hummus since …,רשות,OSM / ידני,
-hummus_places,serves_hummus,bool,—,תגית Hummus,חובה,ידני,
+hummus_places,serves_hummus,bool,—,תגית Hummus,לא בשימוש,—,כל מקום נחשב כמגיש חומוס
 hummus_places,serves_ful,bool,—,תגית Ful · צ'יפ Ful,חובה,ידני,
 hummus_places,serves_mushrooms,bool,—,תגית Mushrooms,חובה,ידני,
 hummus_places,dishes_other,str,—,מנות נוספות,רשות,ידני,מופרד ב-;
@@ -34,6 +34,7 @@ hummus_places,osm_id,int64,—,Something wrong · עדכון מ-OSM,מומלץ,O
 hummus_places,source,str,—,ייחוס © OpenStreetMap,חובה,—,osm / manual / mixed
 hummus_places,last_checked,date,check_date,—,מומלץ,ידני,
 hummus_places,country,str,—,אזור זמן וחגים (PH) לחישוב השעות,מומלץ,חיתוך מרחבי / ידני,"קוד ISO בשתי אותיות, למשל cz"
+hummus_places,status,str,—,הסתרת מקום מהאתר,רשות,ידני,"ריק = מוצג; closed או hidden = מוסתר"
 place_photos,photo_id,int,—,—,חובה,ידני,מפתח ייחודי
 place_photos,place_id,int,—,קישור למקום,חובה,ידני,מפתח זר → hummus_places.place_id
 place_photos,url,str,—,תמונה,חובה,ידני,

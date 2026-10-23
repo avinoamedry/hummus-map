@@ -29,9 +29,9 @@ for slug, (score, h, f, m, vegan, kosher, ktype, kbody, note, tagline, year, oth
            name_he=?, addr_neighbourhood=CASE WHEN slug='kafka-hummus-cafe' THEN 'Staré Město' END WHERE slug=?""",
         (score, h, f, m, vegan, kosher, ktype, kbody, note, tagline, year, other, name_he, slug),
     )
-# מקום עם שעות לא תקינות, ומקום שמגיש חומוס אבל בלי ציון (לא יפורסם)
+# מקום עם שעות לא תקינות, ומקום סגור (status=closed, מוסתר מהאתר)
 con.execute("UPDATE hummus_places SET opening_hours='sometimes', score=3.0, serves_hummus=1 WHERE slug='safir'")
-con.execute("UPDATE hummus_places SET serves_hummus=1, score=NULL WHERE slug='leyaly'")
+con.execute("UPDATE hummus_places SET status='closed' WHERE slug='leyaly'")
 con.execute("UPDATE hummus_places SET instagram='@kafkahummus', phone='+420 123 456 789', website='kafkahummus.cz', addr_city='Praha' WHERE slug='kafka-hummus-cafe'")
 kafka_id = con.execute("SELECT place_id FROM hummus_places WHERE slug='kafka-hummus-cafe'").fetchone()[0]
 con.executemany(

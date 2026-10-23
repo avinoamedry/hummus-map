@@ -147,6 +147,8 @@ h1, h2 { margin: 0; }
 .card-name { font-size: 22px; font-weight: 800; line-height: 1.15; margin: 0; }
 .card-score { display: flex; align-items: center; gap: 4px; font-size: 16px; font-weight: 700; flex-shrink: 0; padding-top: 3px; }
 .card-score svg { fill: var(--accent); }
+.card-score.unrated { font-size: 13px; font-weight: 500; color: var(--muted); padding-top: 6px; }
+.score-box .unrated-lbl { font-size: 14px; font-weight: 700; margin-top: 2px; }
 .addr { font-size: 14px; color: var(--muted); }
 .tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 2px; }
 .tag { font-size: 13px; padding: 5px 10px; border-radius: 12px; background: var(--tag-bg); color: var(--tag-text); font-weight: 500; }

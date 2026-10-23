@@ -1,0 +1,44 @@
+﻿טבלה,שדה,סוג,מפתח OSM,רכיב בעיצוב,סטטוס,מקור הנתון,הערה
+hummus_places,place_id,int,—,שיתוף (Share) · קישור לטבלת תמונות,חובה,ידני,מפתח ייחודי קבוע
+hummus_places,slug,str,—,קישור שיתוף,מומלץ,ידני,למשל shlomo-doron
+hummus_places,name,str,name,שם בכרטיס ובכותרת · חיפוש,חובה,OSM,
+hummus_places,name_he,str,name:he,שם בעברית · חיפוש,חובה,OSM / ידני,
+hummus_places,name_en,str,name:en,שם באנגלית · חיפוש,מומלץ,OSM / ידני,
+hummus_places,addr_city,str,addr:city,שורת כתובת,חובה,OSM,
+hummus_places,addr_street,str,addr:street,שורת כתובת,חובה,OSM,
+hummus_places,addr_housenumber,str,addr:housenumber,שורת כתובת,חובה,OSM,טקסט (12א)
+hummus_places,addr_neighbourhood,str,addr:suburb,שכונה בדף המקום,מומלץ,OSM / חיתוך מרחבי,
+hummus_places,score,float,—,ציון בכרטיס ובדף (Moody's score),חובה,ידני,"ציון הצוות, 0.0–5.0"
+hummus_places,score_date,date,—,—,מומלץ,ידני,מועד מתן הציון
+hummus_places,reviewer_note,str,—,ציטוט בדף המקום,מומלץ,ידני,
+hummus_places,tagline,str,description,שורת רקע בדף המקום,רשות,ידני,
+hummus_places,start_year,int,start_date,Hummus since …,רשות,OSM / ידני,
+hummus_places,serves_hummus,bool,—,תגית Hummus,חובה,ידני,
+hummus_places,serves_ful,bool,—,תגית Ful · צ'יפ Ful,חובה,ידני,
+hummus_places,serves_mushrooms,bool,—,תגית Mushrooms,חובה,ידני,
+hummus_places,dishes_other,str,—,מנות נוספות,רשות,ידני,מופרד ב-;
+hummus_places,diet_vegan,str,diet:vegan,תג טבעוני · צ'יפ Vegan,חובה,OSM / ידני,yes / no / only
+hummus_places,diet_vegetarian,str,diet:vegetarian,תג צמחוני,מומלץ,OSM / ידני,yes / no / only
+hummus_places,diet_kosher,str,diet:kosher,תג כשר,חובה,OSM / ידני,yes / no / only
+hummus_places,kashrut_type,str,—,פירוט כשרות בדף המקום,חובה אם diet_kosher≠no,ידני,קוד מטבלת kashrut_types
+hummus_places,kashrut_body,str,—,שם הגוף המשגיח,חובה אם diet_kosher≠no,ידני,שם כפי שמופיע בתעודה
+hummus_places,kashrut_checked,date,—,—,מומלץ,ידני,מועד בדיקת התעודה
+hummus_places,diet_halal,str,diet:halal,תג חלאל,מומלץ,OSM / ידני,yes / no / only
+hummus_places,diet_gluten_free,str,diet:gluten_free,תג ללא גלוטן,מומלץ,OSM / ידני,yes / no / only
+hummus_places,opening_hours,str,opening_hours,Closed/Open · Open now · שעות · השבוע המלא,חובה,OSM / ידני,תחביר OSM
+hummus_places,phone,str,phone,כפתור טלפון,מומלץ,OSM / ידני,+972-…
+hummus_places,instagram,str,contact:instagram,כפתור Instagram,מומלץ,OSM / ידני,
+hummus_places,website,str,website,כפתור Website,מומלץ,OSM / ידני,
+hummus_places,osm_type,str,—,Something wrong · עדכון מ-OSM,מומלץ,OSM,node / way
+hummus_places,osm_id,int64,—,Something wrong · עדכון מ-OSM,מומלץ,OSM,
+hummus_places,source,str,—,ייחוס © OpenStreetMap,חובה,—,osm / manual / mixed
+hummus_places,last_checked,date,check_date,—,מומלץ,ידני,
+hummus_places,country,str,—,אזור זמן וחגים (PH) לחישוב השעות,מומלץ,חיתוך מרחבי / ידני,"קוד ISO בשתי אותיות, למשל cz"
+place_photos,photo_id,int,—,—,חובה,ידני,מפתח ייחודי
+place_photos,place_id,int,—,קישור למקום,חובה,ידני,מפתח זר → hummus_places.place_id
+place_photos,url,str,—,תמונה,חובה,ידני,
+place_photos,is_main,bool,—,תמונת הכרטיס ברשימה,חובה,ידני,אחת בלבד לכל מקום
+place_photos,sort_order,int,—,סדר בגלריה (swipe),מומלץ,ידני,
+place_photos,caption,str,—,—,רשות,ידני,
+place_photos,credit,str,—,—,מומלץ,ידני,צלם / רישיון
+place_photos,taken_date,date,—,—,רשות,ידני,

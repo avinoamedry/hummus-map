@@ -1,0 +1,185 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>בדיקת נתונים · Hummus Map</title>
+<link rel="icon" href="data:,">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+<style>
+  body { overflow: auto; }
+  main { max-width: 1100px; margin: 0 auto; padding: 24px 16px 48px; }
+  h1 { font-size: 28px; font-weight: 800; margin-bottom: 4px; }
+  h2 { font-size: 20px; font-weight: 800; margin: 28px 0 10px; }
+  .summary { display: flex; flex-wrap: wrap; gap: 10px; margin: 16px 0; }
+  .stat { background: var(--surface); border: 1.5px solid var(--line); border-radius: 16px; padding: 10px 16px; min-width: 120px; }
+  .stat b { display: block; font-size: 24px; }
+  table { width: 100%; border-collapse: collapse; background: var(--surface); border-radius: 16px; overflow: hidden; font-size: 14px; }
+  th, td { text-align: right; padding: 9px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  th { background: var(--tag-bg); color: var(--tag-text); font-weight: 700; }
+  td code { direction: ltr; unicode-bidi: isolate; display: inline-block; font-size: 13px; background: var(--bg); padding: 1px 5px; border-radius: 6px; word-break: break-word; }
+  .sev { font-weight: 700; white-space: nowrap; }
+  .sev.error { color: #A3271A; }
+  .sev.warn { color: var(--tag-text); }
+  .sev.info { color: var(--muted); }
+  .ok { background: #E3EEDB; color: #24461B; padding: 12px 16px; border-radius: 14px; }
+  .fail { background: #F6D5CF; color: #6B1A10; padding: 12px 16px; border-radius: 14px; }
+  .filters { display: flex; gap: 8px; flex-wrap: wrap; margin: 8px 0 12px; }
+  .ltr { direction: ltr; unicode-bidi: isolate; }
+</style>
+<script type="importmap">
+{
+  "imports": {
+    "opening_hours": "https://cdn.jsdelivr.net/npm/opening_hours@3.15.0/build/opening_hours.esm.mjs",
+    "suncalc": "https://cdn.jsdelivr.net/npm/suncalc@2.0.2/index.js"
+  }
+}
+</script>
+<script src="https://cdn.jsdelivr.net/npm/sql.js@1.14.2/dist/sql-wasm.js"></script>
+</head>
+<body>
+<main>
+  <h1>בדיקת נתונים</h1>
+  <p class="muted">הדף קורא את <code class="ltr">data/hummus_app.gpkg</code> כמו שהאתר קורא אותו, ומציג בעיות שכדאי לתקן ב-QGIS. אחרי העלאת קובץ חדש, טוענים את הדף מחדש. <a href="./">חזרה לאתר</a></p>
+  <div id="result" class="muted">טוען…</div>
+  <div class="summary" id="summary"></div>
+  <section id="issuesSection" hidden>
+    <h2>בעיות</h2>
+    <div class="filters" id="sevFilters"></div>
+    <table><thead><tr><th>חומרה</th><th>מקום</th><th>בעיה</th><th>ערך</th></tr></thead><tbody id="issues"></tbody></table>
+  </section>
+  <section id="candidatesSection" hidden>
+    <h2>מקומות שלא מוצגים באתר</h2>
+    <p class="muted">מוצגים רק מקומות עם <code class="ltr">serves_hummus = 1</code> ו-<code class="ltr">score</code> מלא. אפשר לראות את כולם באתר עם <a href="./?debug=1">?debug=1</a>.</p>
+    <table><thead><tr><th>place_id</th><th>שם</th><th>עיר</th><th>חסר</th></tr></thead><tbody id="candidates"></tbody></table>
+  </section>
+</main>
+<script type="module">
+import { loadData, isPublished, photoUrl, DIET_FIELDS, DIET_VALUES } from './js/data.js';
+import { parseHours, hoursReady } from './js/hours.js';
+
+const $ = (s) => document.querySelector(s);
+const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const SEV = { error: 'שגיאה', warn: 'אזהרה', info: 'לידיעה' };
+const EUROPE = { minLon: -25, maxLon: 45, minLat: 34, maxLat: 72 };
+
+async function run() {
+  let config = {};
+  try { config = await (await fetch('data/config.json', { cache: 'no-cache' })).json(); } catch { /* ברירת מחדל */ }
+  let data;
+  try {
+    await hoursReady;
+    data = await loadData(config.data_url || 'data/hummus_app.gpkg', window.initSqlJs);
+  } catch (e) {
+    $('#result').className = 'fail';
+    $('#result').textContent = `לא ניתן לקרוא את קובץ הנתונים: ${e.message}. בדקו שהקובץ הועלה במלואו ושנשמר אחרי סגירת QGIS.`;
+    return;
+  }
+  const { places, photos, kashrutTypes, warnings, wal } = data;
+  const issues = [];
+  const add = (sev, p, problem, value = '') => issues.push({ sev, p, problem, value });
+  const label = (p) => p ? `${p.place_id ?? '—'} · ${p.name || p.name_en || '(ללא שם)'}` : '—';
+
+  if (wal) add('warn', null, 'הקובץ נשמר במצב WAL. האתר קורא אותו, אבל עריכות שלא נכתבו לקובץ הראשי חסרות. סגרו את QGIS לפני ההעלאה, ובדקו שאין לידו קבצי -wal או -shm.');
+  for (const w of warnings) {
+    if (/WAL/.test(w)) continue;
+    const diet = w.match(/^place (\S+) \((.*)\): (diet_\w+)="(.*)" is not yes\/no\/only/);
+    if (diet) add('warn', places.find((p) => String(p.place_id) === diet[1]), `ערך לא תקני ב-${diet[3]} (מותר: ${DIET_VALUES.join(' / ')}). הערך לא מוצג באתר.`, diet[4]);
+    else if (/column .* is missing|table .* is missing/.test(w)) add('error', null, 'עמודה או טבלה חסרה. ייתכן ששם השדה שונה ב-QGIS.', w);
+    else add('warn', null, 'הערה מטעינת הנתונים', w);
+  }
+
+  const bySlug = new Map();
+  const byId = new Map();
+  for (const p of places) {
+    if (p.place_id === null) add('error', p, 'חסר place_id. המקום לא יוצג.');
+    else if (byId.has(p.place_id)) add('error', p, 'place_id כפול', p.place_id);
+    else byId.set(p.place_id, p);
+    if (!p.slug) add('warn', p, 'חסר slug. הקישור ייבנה מ-place_id.');
+    else {
+      if (bySlug.has(p.slug)) add('error', p, `slug כפול (גם אצל ${label(bySlug.get(p.slug))}). הקישור יפתח רק אחד מהם.`, p.slug);
+      bySlug.set(p.slug, p);
+      if (!/^[a-z0-9]+(-[a-z0-9]+)*$/.test(p.slug)) add('warn', p, 'slug צריך להכיל רק אותיות לטיניות קטנות, ספרות ומקפים', p.slug);
+    }
+    if (!p.name && !p.name_en) add('error', p, 'חסר שם (name או name_en)');
+    if (!p.lonlat) add('error', p, 'אין מיקום (גאומטריה ריקה או לא תקינה). המקום לא יופיע במפה.');
+    else {
+      const [lon, lat] = p.lonlat;
+      if (lon < EUROPE.minLon || lon > EUROPE.maxLon || lat < EUROPE.minLat || lat > EUROPE.maxLat) {
+        add('error', p, 'הנקודה מחוץ לאירופה. אולי קו האורך והרוחב הוחלפו?', `${lon}, ${lat}`);
+      }
+    }
+    if (!p.country) add('info', p, 'חסר country (קוד מדינה בשתי אותיות). השעות והחגים מחושבים לפי הערכה מהקואורדינטות.');
+    if (p.score !== null && (p.score < 0 || p.score > 5)) add('error', p, 'ציון מחוץ לטווח 0–5', p.score);
+    if (p.opening_hours) {
+      const h = parseHours(p.opening_hours, p);
+      if (h.error) add('error', p, `שעות לא תקינות לפי תחביר OSM. באתר יוצג "Hours not available". פירוט: ${h.error}`, p.opening_hours);
+      else {
+        const overwrite = h.warnings.filter((w) => /overwrites parts of the previous rule/.test(w));
+        if (overwrite.length) add('warn', p, 'כלל של יום מאוחר דורס את ההמשך שאחרי חצות של היום הקודם. אם המקום פתוח אחרי חצות, מפרידים בפסיק במקום נקודה-פסיק, למשל: Fr 12:00-01:45, Sa 14:00-01:45', p.opening_hours);
+        for (const w of h.warnings.filter((x) => !overwrite.includes(x))) add('warn', p, `אזהרה בשעות: ${w}`, p.opening_hours);
+      }
+    } else if (isPublished(p)) add('warn', p, 'אין opening_hours. באתר יוצג "Hours not available".');
+    if (['yes', 'only'].includes(p.diet_kosher)) {
+      if (!p.kashrut_type) add('warn', p, 'diet_kosher מסומן אבל חסר kashrut_type');
+      if (['badatz', 'private'].includes(p.kashrut_type) && !p.kashrut_body) add('warn', p, 'חסר kashrut_body (שם הגוף המשגיח)');
+    }
+    if (p.kashrut_type && !kashrutTypes[p.kashrut_type]) add('error', p, `kashrut_type לא קיים בטבלת הקודים (${Object.keys(kashrutTypes).join(', ')})`, p.kashrut_type);
+    const mains = p.photos.filter((ph) => ph.is_main).length;
+    if (mains > 1) add('error', p, `יש ${mains} תמונות ראשיות (is_main = 1). צריכה להיות אחת.`);
+    if (!mains && isPublished(p)) add('warn', p, p.photos.length ? 'אין תמונה ראשית (is_main). הכרטיס יציג את התמונה הראשונה.' : 'אין תמונות. הכרטיס יציג אייקון.');
+  }
+
+  for (const ph of photos) {
+    if (!byId.has(Number(ph.place_id))) add('error', null, `תמונה ${ph.photo_id ?? ''} מקושרת ל-place_id שלא קיים`, `place_id=${ph.place_id}, url=${ph.url}`);
+  }
+  const fileChecks = places.flatMap((p) => p.photos.filter((ph) => !/^(https?:)?\/\//.test(ph.url)).map((ph) => ({ p, ph })));
+  await Promise.all(fileChecks.map(async ({ p, ph }) => {
+    try {
+      const res = await fetch(photoUrl(ph.url), { method: 'HEAD', cache: 'no-cache' });
+      if (!res.ok) add('error', p, 'קובץ התמונה לא נמצא בתיקיית photos/. בדקו את שם הקובץ (כולל אותיות גדולות/קטנות).', ph.url);
+    } catch { /* בדיקה לא זמינה */ }
+  }));
+
+  const published = places.filter(isPublished);
+  const counts = { error: 0, warn: 0, info: 0 };
+  issues.forEach((i) => counts[i.sev]++);
+  $('#summary').innerHTML = [
+    ['מקומות בקובץ', places.length], ['מוצגים באתר', published.length], ['תמונות', photos.length],
+    ['שגיאות', counts.error], ['אזהרות', counts.warn],
+  ].map(([l, n]) => `<div class="stat"><b>${n}</b>${l}</div>`).join('');
+  $('#result').className = counts.error ? 'fail' : 'ok';
+  $('#result').textContent = counts.error
+    ? `נמצאו ${counts.error} שגיאות שכדאי לתקן ב-QGIS.`
+    : 'לא נמצאו שגיאות. האתר יציג את הנתונים כמו שהם.';
+
+  const order = { error: 0, warn: 1, info: 2 };
+  issues.sort((a, b) => order[a.sev] - order[b.sev] || (a.p?.place_id ?? 0) - (b.p?.place_id ?? 0));
+  let shown = new Set(['error', 'warn']);
+  const renderIssues = () => {
+    $('#issues').innerHTML = issues.filter((i) => shown.has(i.sev)).map((i) => `<tr>
+      <td class="sev ${i.sev}">${SEV[i.sev]}</td><td dir="auto">${esc(label(i.p))}</td><td>${esc(i.problem)}</td>
+      <td>${i.value !== '' ? `<code>${esc(i.value)}</code>` : ''}</td></tr>`).join('') || '<tr><td colspan="4">אין</td></tr>';
+  };
+  $('#sevFilters').innerHTML = Object.entries(SEV).map(([k, l]) => `<label class="opt"><input type="checkbox" value="${k}" ${shown.has(k) ? 'checked' : ''}><span>${l} (${counts[k]})</span></label>`).join('');
+  $('#sevFilters').addEventListener('change', () => {
+    shown = new Set([...$('#sevFilters').querySelectorAll('input:checked')].map((i) => i.value));
+    renderIssues();
+  });
+  renderIssues();
+  $('#issuesSection').hidden = false;
+
+  const hidden = places.filter((p) => !isPublished(p));
+  $('#candidates').innerHTML = hidden.map((p) => {
+    const missing = p.status ? [`status = ${p.status}`] : [!p.serves_hummus && 'serves_hummus', p.score === null && 'score'].filter(Boolean);
+    return `<tr><td>${p.place_id ?? '—'}</td><td dir="auto"><a href="./?debug=1#/place/${encodeURIComponent(p.slug || '')}">${esc(p.name || p.name_en)}</a></td><td dir="auto">${esc(p.addr_city || '')}</td><td><code>${esc(missing.join(', '))}</code></td></tr>`;
+  }).join('') || '<tr><td colspan="4">כל המקומות מוצגים</td></tr>';
+  $('#candidatesSection').hidden = false;
+}
+run();
+</script>
+</body>
+</html>

@@ -1,0 +1,285 @@
+/* טוקני העיצוב (CLAUDE.md סעיף 6.1). --accent נדרס מ-data/config.json */
+:root {
+  --bg: #F7F0E3;
+  --surface: #FFFBF4;
+  --text: #2A2118;
+  --muted: #6B5D4C;
+  --line: #E3D3B8;
+  --chip-line: #D9C7A8;
+  --btn-line: #CDB894;
+  /* בעיצוב #C9531C; נבחר #B8461A מאפשרויות ה-accent של העיצוב כי לבן על #C9531C (4.43) לא עומד ב-AA */
+  --accent: #B8461A;
+  --accent-hover: #9E3E12;
+  --tag-bg: #F7DCC8;
+  --tag-text: #7A3410;
+  --closed: #5F564B;
+  --photo-ph: #EAD5B4;
+  --photo-ph-icon: #A9895D;
+  --quote: #3D3226;
+  --r-card: 20px;
+  --r-chip: 20px;
+  --r-search: 22px;
+  --r-sheet: 24px;
+  --r-tile: 18px;
+  --r-btn: 28px;
+  --list-w: 390px;
+  color-scheme: light;
+}
+
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: Rubik, system-ui, sans-serif;
+  font-size: 16px;
+  -webkit-font-smoothing: antialiased;
+  -webkit-tap-highlight-color: transparent;
+}
+a { color: var(--accent); }
+a:hover { color: var(--accent-hover); }
+button { font: inherit; color: inherit; cursor: pointer; }
+button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 2px;
+}
+[hidden] { display: none !important; }
+[tabindex="-1"]:focus { outline: none; }
+h1, h2 { margin: 0; }
+.sr {
+  position: absolute; width: 1px; height: 1px; overflow: hidden;
+  clip: rect(0 0 0 0); white-space: nowrap;
+}
+.skip { position: absolute; left: -999px; top: 8px; z-index: 50; background: var(--surface); padding: 10px 14px; border-radius: 12px; }
+.skip:focus { left: 8px; }
+.muted { color: var(--muted); }
+.small { font-size: 13px; }
+
+/* ---------- פריסה ---------- */
+.app { position: relative; height: 100dvh; overflow: hidden; }
+.pane { height: 100dvh; overflow-y: auto; overscroll-behavior: contain; background: var(--bg); }
+.map-pane { position: absolute; inset: 0; background: var(--photo-ph); }
+.map { position: absolute; inset: 0; }
+
+/* מובייל: תצוגה אחת בכל פעם */
+@media (max-width: 899.98px) {
+  .app[data-view="list"] .map-pane { visibility: hidden; }
+  .app[data-view="list"] .list-pane, .app[data-view="place"] .place-pane { position: relative; z-index: 1; }
+  .app[data-view="place"] .list-pane { display: none; }
+  .app[data-view="place"] .map-pane { visibility: hidden; }
+  /* מסך מפה: הסרגל והצ'יפים צפים מעל המפה */
+  .app[data-view="map"] .list-pane {
+    position: absolute; inset: 0 0 auto 0; height: auto; overflow: visible;
+    background: transparent; z-index: 2; pointer-events: none;
+  }
+  .app[data-view="map"] .list-pane > * { pointer-events: auto; }
+  .app[data-view="map"] #list, .app[data-view="map"] .status { display: none; }
+  .app[data-view="map"] .topbar { background: linear-gradient(var(--bg) 70%, transparent); }
+  .app[data-view="map"] .chip:not(.on) { background: var(--surface); }
+  .app[data-view="map"] .i-map, .app:not([data-view="map"]) .i-list { display: none; }
+}
+
+/* מסך רחב: רשימה בעמודה של 390px ומפה לידה */
+@media (min-width: 900px) {
+  .app { display: grid; grid-template-columns: var(--list-w) 1fr; }
+  .list-pane, .place-pane { grid-column: 1; grid-row: 1; border-right: 1px solid var(--line); }
+  .app[data-view="place"] .list-pane { display: none; }
+  .map-pane { position: relative; grid-column: 2; grid-row: 1; inset: auto; height: 100dvh; }
+  .view-toggle { display: none; }
+  .i-list { display: none; }
+}
+
+/* ---------- סרגל עליון ---------- */
+.topbar { display: flex; align-items: center; gap: 10px; padding: 20px 16px 12px; }
+.icon-btn {
+  width: 44px; height: 44px; flex-shrink: 0; border: none; background: transparent; padding: 0;
+  display: flex; align-items: center; justify-content: center; border-radius: 22px; color: var(--text);
+}
+.icon-btn:hover { background: rgb(0 0 0 / .05); }
+.search {
+  flex: 1; min-width: 0; height: 44px; border-radius: var(--r-search); background: var(--surface);
+  border: 1.5px solid var(--line); display: flex; align-items: center; gap: 8px; padding: 0 14px; color: var(--muted);
+}
+.search:focus-within { border-color: var(--accent); }
+.search input {
+  border: none; background: transparent; font: inherit; font-size: 15px; color: var(--text);
+  outline: none; width: 100%; min-width: 0; height: 100%;
+}
+.search input::placeholder { color: var(--muted); }
+
+/* ---------- צ'יפים ---------- */
+.chips {
+  display: flex; gap: 8px; padding: 0 16px 16px; overflow-x: auto; white-space: nowrap;
+  scrollbar-width: none;
+}
+.chips::-webkit-scrollbar { display: none; }
+.chip {
+  height: 40px; padding: 0 16px; border-radius: var(--r-chip); border: 1.5px solid var(--chip-line);
+  background: transparent; color: var(--text); font-size: 15px; display: flex; align-items: center;
+  gap: 6px; flex-shrink: 0;
+}
+.chip.on { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 500; }
+.chip-icon { width: 52px; padding: 0; justify-content: center; }
+.chip-icon.on svg path { fill: currentColor; }
+
+.status { margin: 0 16px 10px; font-size: 14px; color: var(--muted); min-height: 1px; }
+.status:empty { display: none; }
+.banner { margin: 0 16px 12px; padding: 8px 12px; border-radius: 12px; background: var(--tag-bg); color: var(--tag-text); font-size: 13px; }
+
+/* ---------- כרטיס מקום ---------- */
+.cards { display: flex; flex-direction: column; gap: 18px; padding: 0 16px 32px; outline: none; }
+.card {
+  display: block; text-decoration: none; color: inherit; background: var(--surface);
+  border-radius: var(--r-card); overflow: hidden; box-shadow: 0 1px 0 var(--line);
+}
+.card:hover { color: inherit; box-shadow: 0 1px 0 var(--line), 0 4px 16px rgb(42 33 24 / .08); }
+.card-photo { position: relative; height: 190px; background: var(--photo-ph); color: var(--photo-ph-icon); display: flex; align-items: center; justify-content: center; }
+.card-photo img, .gallery img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.badge {
+  position: absolute; top: 12px; right: 12px; color: #fff; font-size: 13px; font-weight: 500;
+  padding: 5px 12px; border-radius: 14px; background: var(--closed);
+}
+.badge.open { background: var(--accent); }
+.badge.static { position: static; padding: 4px 11px; border-radius: 12px; }
+.badge.draft { left: 12px; right: auto; background: var(--tag-text); }
+.card-body { padding: 14px 16px 16px; display: flex; flex-direction: column; gap: 8px; }
+.card-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+.card-name { font-size: 22px; font-weight: 800; line-height: 1.15; margin: 0; }
+.card-score { display: flex; align-items: center; gap: 4px; font-size: 16px; font-weight: 700; flex-shrink: 0; padding-top: 3px; }
+.card-score svg { fill: var(--accent); }
+.addr { font-size: 14px; color: var(--muted); }
+.tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 2px; }
+.tag { font-size: 13px; padding: 5px 10px; border-radius: 12px; background: var(--tag-bg); color: var(--tag-text); font-weight: 500; }
+.diet { font-size: 12px; padding: 4px 9px; border-radius: 10px; border: 1.2px solid var(--btn-line); color: var(--muted); font-weight: 500; }
+.empty { text-align: center; color: var(--muted); padding: 32px 16px; line-height: 1.5; }
+
+/* ---------- דף מקום ---------- */
+.gallery-wrap { position: relative; height: 280px; background: var(--photo-ph); color: var(--photo-ph-icon); }
+.gallery {
+  height: 100%; display: flex; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none;
+}
+.gallery::-webkit-scrollbar { display: none; }
+.gallery > * { flex: 0 0 100%; height: 100%; scroll-snap-align: start; display: flex; align-items: center; justify-content: center; }
+.gallery figure { margin: 0; position: relative; }
+.gallery figcaption { position: absolute; left: 12px; bottom: 36px; font-size: 12px; color: #fff; text-shadow: 0 1px 3px rgb(0 0 0 / .6); }
+.dots { position: absolute; left: 0; right: 0; bottom: 34px; display: flex; justify-content: center; gap: 6px; pointer-events: none; }
+.dots span { width: 7px; height: 7px; border-radius: 50%; background: rgb(255 251 244 / .6); }
+.dots span.on { background: var(--surface); }
+.float-btn {
+  position: absolute; top: 20px; width: 44px; height: 44px; border-radius: 22px; border: none;
+  background: var(--surface); color: var(--text); display: flex; align-items: center; justify-content: center;
+  text-decoration: none; box-shadow: 0 1px 4px rgb(42 33 24 / .15);
+}
+.float-btn.back { left: 16px; }
+.float-btn.save { right: 16px; color: var(--accent); }
+.float-btn.save[aria-pressed="true"] svg path { fill: currentColor; }
+.sheet-body {
+  margin-top: -24px; background: var(--bg); border-radius: var(--r-sheet) var(--r-sheet) 0 0;
+  padding: 24px 20px 32px; display: flex; flex-direction: column; gap: 26px; position: relative;
+}
+.section { display: flex; flex-direction: column; gap: 8px; }
+.title-row { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+.place-name { font-size: 30px; font-weight: 800; line-height: 1.1; }
+.score-box {
+  background: var(--accent); color: #fff; border-radius: 16px; padding: 8px 12px;
+  display: flex; flex-direction: column; align-items: center; flex-shrink: 0;
+}
+.score-box .num { display: flex; align-items: center; gap: 4px; font-size: 20px; font-weight: 800; }
+.score-box .lbl { font-size: 11px; }
+.score-box.none { background: var(--closed); }
+.place-addr { display: flex; align-items: center; gap: 6px; font-size: 15px; color: var(--muted); }
+.place-addr svg { flex-shrink: 0; }
+.quote { margin: 6px 0 0; font-size: 16px; line-height: 1.5; font-style: italic; color: var(--quote); }
+.since { font-size: 13px; color: var(--muted); }
+.divider { height: 1px; background: var(--line); }
+.h2 { font-size: 22px; font-weight: 800; }
+.tiles { display: flex; gap: 10px; flex-wrap: wrap; }
+.tile {
+  width: 104px; height: 112px; border-radius: var(--r-tile); background: var(--surface); border: 1.5px solid var(--line);
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; color: var(--accent);
+}
+.tile span { font-size: 14px; font-weight: 500; color: var(--text); }
+.diet-lg { font-size: 14px; padding: 8px 14px; border-radius: 16px; border: 1.5px solid var(--btn-line); color: var(--text); font-weight: 500; }
+.kashrut { font-size: 14px; color: var(--muted); line-height: 1.5; }
+.hours-head { display: flex; align-items: center; gap: 10px; }
+.today-row { display: flex; justify-content: space-between; gap: 12px; font-size: 16px; }
+.today-row strong { font-weight: 500; text-align: right; }
+.link-btn { align-self: flex-start; background: transparent; border: none; padding: 0; min-height: 44px; font-size: 15px; color: var(--accent); font-weight: 500; }
+.link-btn:hover { color: var(--accent-hover); }
+.week { width: 100%; border-collapse: collapse; font-size: 15px; }
+.week td { padding: 6px 0; border-bottom: 1px solid var(--line); }
+.week td:last-child { text-align: right; }
+.week tr.today td { font-weight: 700; }
+.contact { display: flex; justify-content: center; gap: 14px; }
+.round-btn {
+  width: 56px; height: 56px; border-radius: 28px; border: 1.5px solid var(--btn-line); background: transparent;
+  color: var(--text); display: flex; align-items: center; justify-content: center;
+}
+.round-btn:hover { background: var(--surface); color: var(--text); }
+.actions { display: flex; flex-direction: column; gap: 12px; margin-top: 6px; }
+.btn {
+  height: 56px; border-radius: var(--r-btn); font-size: 18px; font-weight: 700; display: flex;
+  align-items: center; justify-content: center; text-decoration: none; padding: 0 20px;
+}
+.btn-accent { border: none; background: var(--accent); color: #fff; }
+.btn-accent:hover { background: var(--accent-hover); color: #fff; }
+.btn-outline { border: 2px solid var(--text); background: transparent; color: var(--text); }
+.btn-outline:hover { background: var(--surface); color: var(--text); }
+.foot { text-align: center; display: flex; flex-direction: column; gap: 6px; font-size: 13px; color: var(--muted); }
+.foot a { font-size: 15px; }
+.foot .attr a { font-size: 13px; color: var(--muted); }
+
+/* ---------- מפה ---------- */
+.map-message {
+  position: absolute; left: 16px; right: 16px; top: 50%; transform: translateY(-50%); margin: 0;
+  text-align: center; background: var(--surface); padding: 16px; border-radius: 16px; color: var(--muted);
+}
+.map-card {
+  position: absolute; left: 16px; right: 16px; bottom: 32px; z-index: 3; max-width: 420px; margin: 0 auto;
+  background: var(--surface); border-radius: var(--r-card); box-shadow: 0 6px 24px rgb(42 33 24 / .2);
+  display: flex; align-items: stretch;
+}
+.map-card a { flex: 1; display: flex; flex-direction: column; gap: 6px; padding: 14px 16px; color: inherit; text-decoration: none; min-width: 0; }
+.map-card .card-name { font-size: 18px; }
+.map-card .icon-btn { margin: 6px 6px 0 0; }
+.maplibregl-ctrl-attrib { font-family: Rubik, system-ui, sans-serif; }
+@media (max-width: 899.98px) {
+  .app[data-view="map"] .maplibregl-ctrl-top-right { top: 136px; }
+}
+
+/* ---------- גיליונות (Filters, תפריט) ---------- */
+.sheet {
+  border: none; padding: 0; width: min(480px, 100%); max-width: 100%; max-height: 90dvh; margin: auto auto 0;
+  border-radius: var(--r-sheet) var(--r-sheet) 0 0; background: var(--bg); color: var(--text);
+}
+@media (min-width: 600px) { .sheet { margin: auto; border-radius: var(--r-sheet); } }
+.sheet::backdrop { background: rgb(42 33 24 / .45); }
+.sheet form { padding: 16px 20px 24px; display: flex; flex-direction: column; gap: 18px; }
+.sheet-head { display: flex; align-items: center; justify-content: space-between; }
+.sheet-head h2 { font-size: 22px; font-weight: 800; }
+.sheet fieldset { border: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 10px; }
+.sheet legend { font-weight: 700; font-size: 16px; padding: 0; margin-bottom: 10px; }
+.opt-row { display: flex; flex-wrap: wrap; gap: 8px; }
+.opt { position: relative; }
+.opt input { position: absolute; opacity: 0; inset: 0; margin: 0; cursor: pointer; }
+.opt span {
+  height: 40px; padding: 0 16px; border-radius: var(--r-chip); border: 1.5px solid var(--chip-line);
+  display: flex; align-items: center; font-size: 15px;
+}
+.opt input:checked + span { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 500; }
+.opt input:focus-visible + span { outline: 3px solid var(--accent); outline-offset: 2px; }
+.sheet input[type="range"] { width: 100%; accent-color: var(--accent); height: 44px; }
+.sheet select {
+  height: 44px; border-radius: 14px; border: 1.5px solid var(--chip-line); background: var(--surface);
+  font: inherit; color: var(--text); padding: 0 12px;
+}
+.sheet-actions { display: flex; gap: 12px; }
+.sheet-actions .btn { flex: 1; font-size: 16px; height: 52px; }
+
+.toast {
+  position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); z-index: 60;
+  background: var(--text); color: var(--surface); padding: 12px 18px; border-radius: 16px; font-size: 15px;
+}
+.loader { padding: 40px 16px; text-align: center; color: var(--muted); }
+
+@media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto !important; } }

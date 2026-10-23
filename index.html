@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Hummus Map</title>
+<meta name="description" content="Hand-picked hummus places across Europe, on a map and in a list.">
+<meta name="theme-color" content="#F7F0E3">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23C9531C' stroke-width='2' stroke-linecap='round'%3E%3Cpath d='M3 11h18a9 9 0 0 1-18 0z'/%3E%3Ccircle cx='12' cy='7.5' r='1.3'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/maplibre-gl@6.13.0/dist/maplibre-gl.css">
+<link rel="stylesheet" href="css/style.css">
+<script type="importmap">
+{
+  "imports": {
+    "maplibre-gl": "https://cdn.jsdelivr.net/npm/maplibre-gl@6.13.0/dist/maplibre-gl.mjs",
+    "opening_hours": "https://cdn.jsdelivr.net/npm/opening_hours@3.15.0/build/opening_hours.esm.mjs",
+    "suncalc": "https://cdn.jsdelivr.net/npm/suncalc@2.0.2/index.js"
+  }
+}
+</script>
+<link rel="preload" href="https://cdn.jsdelivr.net/npm/sql.js@1.14.2/dist/sql-wasm.wasm" as="fetch" crossorigin>
+<link rel="modulepreload" href="js/data.js">
+<link rel="modulepreload" href="js/hours.js">
+<link rel="modulepreload" href="js/i18n.js">
+<script src="https://cdn.jsdelivr.net/npm/sql.js@1.14.2/dist/sql-wasm.js"></script>
+<script type="module" src="js/app.js"></script>
+</head>
+<body>
+<a class="skip" href="#list">Skip to places</a>
+<div id="app" class="app" data-view="list">
+
+  <section id="listPane" class="pane list-pane" aria-label="Places">
+    <header class="topbar">
+      <button id="menuBtn" class="icon-btn" type="button" aria-label="Menu" aria-haspopup="dialog">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+      </button>
+      <label class="search">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg>
+        <span class="sr" data-i18n="searchLabel">Search places</span>
+        <input id="searchInput" type="search" autocomplete="off" enterkeyhint="search" placeholder="Search hummus places">
+      </label>
+      <button id="viewToggle" class="icon-btn view-toggle" type="button" aria-label="Show map">
+        <svg class="i-map" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="M3 6l6-2 6 2 6-2v14l-6 2-6-2-6 2z"/><path d="M9 4v14M15 6v14"/></svg>
+        <svg class="i-list" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M8 6h12M8 12h12M8 18h12"/><circle cx="4" cy="6" r="1"/><circle cx="4" cy="12" r="1"/><circle cx="4" cy="18" r="1"/></svg>
+      </button>
+    </header>
+    <div class="chips" role="toolbar" aria-label="Quick filters">
+      <button id="chipFilters" class="chip" type="button" aria-haspopup="dialog">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round" aria-hidden="true"><path d="M3 4h18l-7 8v7l-4 2v-9z"/></svg><span>Filters</span>
+      </button>
+      <button id="chipSaved" class="chip chip-icon" type="button" aria-label="Saved places" aria-pressed="false">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round" aria-hidden="true"><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/></svg>
+      </button>
+      <button id="chipFul" class="chip" type="button" aria-pressed="false">Ful</button>
+      <button id="chipOpen" class="chip" type="button" aria-pressed="false">Open now</button>
+      <button id="chipVegan" class="chip" type="button" aria-pressed="false">Vegan</button>
+    </div>
+    <p id="debugBanner" class="banner" hidden></p>
+    <p id="status" class="status" role="status" aria-live="polite"></p>
+    <div id="list" class="cards" tabindex="-1"></div>
+  </section>
+
+  <section id="placePane" class="pane place-pane" aria-live="polite" hidden></section>
+
+  <section id="mapPane" class="map-pane" aria-label="Map">
+    <div id="map" class="map"></div>
+    <p id="mapMessage" class="map-message" hidden></p>
+    <div id="mapCard" class="map-card" hidden></div>
+  </section>
+</div>
+
+<dialog id="filtersDialog" class="sheet" aria-labelledby="filtersTitle">
+  <form method="dialog" id="filtersForm">
+    <div class="sheet-head">
+      <h2 id="filtersTitle">Filters</h2>
+      <button class="icon-btn" value="close" aria-label="Close">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+      </button>
+    </div>
+    <fieldset><legend data-i18n="filterDishes">Dishes</legend><div class="opt-row" id="fDishes"></div></fieldset>
+    <fieldset><legend data-i18n="filterDiet">Dietary</legend><div class="opt-row" id="fDiet"></div></fieldset>
+    <fieldset><legend class="sr" data-i18n="openNow">Open now</legend><div class="opt-row" id="fOpen"></div></fieldset>
+    <fieldset>
+      <legend><span data-i18n="filterMinScore">Minimum score</span>: <output id="fMinOut">0</output></legend>
+      <input id="fMin" type="range" min="0" max="5" step="0.5" value="0" aria-describedby="fMinOut">
+    </fieldset>
+    <fieldset>
+      <legend><label for="fCity" data-i18n="filterCity">City</label></legend>
+      <select id="fCity"></select>
+    </fieldset>
+    <div class="sheet-actions">
+      <button type="button" id="fClear" class="btn btn-outline">Clear all</button>
+      <button value="apply" id="fApply" class="btn btn-accent">Show places</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog id="menuDialog" class="sheet" aria-labelledby="menuTitle">
+  <form method="dialog">
+    <div class="sheet-head">
+      <h2 id="menuTitle">Hummus Map</h2>
+      <button class="icon-btn" value="close" aria-label="Close">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+      </button>
+    </div>
+    <fieldset>
+      <legend data-i18n="sortBy">Sort by</legend>
+      <div class="opt-row" id="sortOptions"></div>
+    </fieldset>
+    <p id="aboutText" class="muted"></p>
+    <p class="muted small" id="menuAttribution"></p>
+  </form>
+</dialog>
+
+<div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+</body>
+</html>

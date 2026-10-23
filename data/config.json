@@ -1,0 +1,7 @@
+{
+  "report_email": "",
+  "accent": "#B8461A",
+  "map_center": [12, 50],
+  "map_zoom": 3.6,
+  "data_url": "data/hummus_app.gpkg"
+}

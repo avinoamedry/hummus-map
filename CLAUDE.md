@@ -291,6 +291,8 @@
 - **תפריט ומחירים (בקשת המשתמש, 2.11.2026):** נוספה טבלת `menu_items` (טבלת attributes ב-GPKG): ‏`place_id`, ‏`dish` (hummus/ful/mushrooms/other), ‏`name`, ‏`price`, ‏`currency`, ‏`description`, ‏`source_url`, ‏`checked_date`, ‏`sort_order`. דף המקום מציג סעיף Menu מקובץ לפי מנה. מנת `ful` מסמנת את המקום כמגיש פול. הטבלה רשות: קובץ בלעדיה נטען כרגיל.
 - **מקומות מ-Overture (2.11.2026):** נוספו 6 מקומות בפראג עם `source = 'overture'` (Overture Maps places, release 2026-10-21.0), אחרי בדיקה שהחומוס מופיע בתפריט שלהם באתר או ב-Wolt/Foodora. התפריט של Palestinian Restaurant (Spálená 17) נרשם על Mr. Falafel, שנמצא באותה נקודה.
 
+- **מטמון בדפדפן:** ‏GitHub Pages שומר קבצים בדפדפן עד 10 דקות, ומשתמש עלול לקבל JS ישן עם GPKG חדש. לכן ה-CSS וה-JS המקומיים נטענים עם `?v=<תאריך>` (ב-import map, ב-modulepreload וב-script של `index.html` ו-`admin-check.html`). **בכל שינוי קוד מעדכנים את ה-v בשני הקבצים.**
+
 **פיתוח ובדיקות:** `npm install` (כלי בדיקה בלבד), `npm test` (בדיקות יחידה), `python3 tests/make_fixture.py && npm run e2e` (Playwright ברוחב 390 ו-1280, בלי תלות ברשת).
 
 **פערים פתוחים:**

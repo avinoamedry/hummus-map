@@ -4,3 +4,4 @@ tests/screenshots/
 *.gpkg-shm
 tests/fixture*.gpkg
 tests/photos/
+__pycache__/

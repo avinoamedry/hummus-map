@@ -22,7 +22,7 @@ export const i18n = {
     since: (y) => `Hummus since ${y}`,
     serving: 'Serving',
     dishes: { hummus: 'Hummus', ful: 'Ful', mushrooms: 'Mushrooms' },
-    menuTitle: 'Menu',
+    menuTitle: 'Hummus dishes on the menu',
     menuGroups: { hummus: 'Hummus', ful: 'Ful', mushrooms: 'Mushrooms', other: 'Also on the menu' },
     priceNA: 'Price not listed',
     menuChecked: (d) => `Prices checked ${d}. They may have changed.`,

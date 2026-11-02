@@ -244,7 +244,7 @@ for (const width of [390, 1280]) {
     await page.goto(`${BASE}#/place/the-eastern-bistro`);
     await page.locator('#placeTitle').waitFor();
     const menu = page.locator('#placePane .menu');
-    assert.equal(await menu.locator('h2').textContent(), 'Menu');
+    assert.equal(await menu.locator('h2').textContent(), 'Hummus dishes on the menu');
     assert.deepEqual(await menu.locator('.menu-group').allTextContents(), ['Hummus', 'Ful']);
     assert.equal(await menu.locator('li').first().locator('.menu-name').textContent(), 'Hummus with warm pita & olive oil (180 g)');
     assert.equal(await menu.locator('li').first().locator('.menu-price').textContent(), '170 Kč');

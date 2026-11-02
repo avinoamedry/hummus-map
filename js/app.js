@@ -1,5 +1,5 @@
 // ניתוב, מצב ורינדור: רשימה (#/), מפה (#/map) ודף מקום (#/place/<slug>).
-import { loadData, isPublished, photoUrl, DIET_FIELDS } from './data.js';
+import { loadData, isPublished, photoUrl, formatPrice, DIET_FIELDS } from './data.js';
 import { hoursStatus, hoursReady } from './hours.js';
 import { t } from './i18n.js';
 
@@ -303,6 +303,22 @@ function syncControls() {
 }
 
 // ---------- דף מקום ----------
+
+function menuSection(p) {
+  if (!p.menu.length) return '';
+  const groups = [...new Set(p.menu.map((m) => m.dish))];
+  const rows = groups.map((g) => `
+    ${groups.length > 1 || g !== 'hummus' ? `<h3 class="menu-group">${t.menuGroups[g]}</h3>` : ''}
+    <ul class="menu-list">${p.menu.filter((m) => m.dish === g).map((m) => `
+      <li><span class="menu-name"><span dir="auto">${esc(m.name)}</span>${m.description ? `<small dir="auto">${esc(m.description)}</small>` : ''}</span>
+      <span class="menu-dots" aria-hidden="true"></span>
+      <span class="menu-price${m.price === null ? ' na' : ''}">${m.price === null ? t.priceNA : esc(formatPrice(m.price, m.currency))}</span></li>`).join('')}
+    </ul>`).join('');
+  const dates = p.menu.map((m) => m.checked_date).filter(Boolean).sort();
+  const checked = dates.length ? `<p class="muted small" style="margin:0">${t.menuChecked(esc(dates[dates.length - 1]))}</p>` : '';
+  return `<div class="section menu" style="gap:8px"><h2 class="h2">${t.menuTitle}</h2>${rows}${checked}</div>`;
+}
+
 function renderPlace(slug) {
   const p = state.bySlug.get(slug);
   if (!state.loaded) {
@@ -323,6 +339,7 @@ function renderPlace(slug) {
   const tiles = Object.keys(DISHES).filter((d) => p[DISHES[d]])
     .map((d) => `<div class="tile">${ICON.dish[d]}<span>${t.dishes[d]}</span></div>`).join('');
   const others = p.dishes.map((d) => `<span class="tag" dir="auto">${esc(d)}</span>`).join('');
+  const menuHtml = menuSection(p);
   const diets = dietBadges(p).map((d) => `<span class="diet-lg">${esc(d)}</span>`).join('');
   // התווית לפי שפת הממשק; label_he בטבלת הקודים כולל הערות למנהל ולכן לא מוצג כמו שהוא בממשק האנגלי
   const kashrutLabel = p.kashrut ? t.kashrut[p.kashrut.code] || p.kashrut.label_en || p.kashrut.label_he : '';
@@ -372,6 +389,7 @@ function renderPlace(slug) {
   </div>
   <div class="divider"></div>
   ${tiles || others ? `<div class="section" style="gap:14px"><h2 class="h2">${t.serving}</h2>${tiles ? `<div class="tiles">${tiles}</div>` : ''}${others ? `<div class="tags">${others}</div>` : ''}</div>` : ''}
+  ${menuHtml}
   ${diets || kashrut ? `<div class="section" style="gap:12px"><h2 class="h2">${t.dietary}</h2>${diets ? `<div class="tags">${diets}</div>` : ''}${kashrut}</div>` : ''}
   <div class="divider"></div>
   <div class="section" style="gap:10px">${hoursHtml}</div>

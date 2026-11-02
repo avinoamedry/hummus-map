@@ -92,11 +92,11 @@ for (const width of [390, 1280]) {
   await check(`${W} list loads with published places only, sorted by score`, async () => {
     await page.goto(BASE);
     await cards().first().waitFor();
-    assert.equal(await cards().count(), 23);
+    assert.equal(await cards().count(), 29);
     const n = await names();
     assert.equal(n[0], 'Kafka Hummus Café');
     assert.ok(!n.includes('Leyaly'), 'unpublished place hidden');
-    assert.equal(await page.locator('#status').textContent(), '23 places');
+    assert.equal(await page.locator('#status').textContent(), '29 places');
     await page.screenshot({ path: join(SHOTS, `list-${width}.png`) });
   });
 
@@ -129,23 +129,23 @@ for (const width of [390, 1280]) {
     await page.fill('#searchInput', 'zzzz');
     await page.waitForSelector('#list .empty');
     await page.fill('#searchInput', '');
-    await page.waitForFunction(() => document.querySelectorAll('#list .card').length === 23);
+    await page.waitForFunction(() => document.querySelectorAll('#list .card').length === 29);
   });
 
   await check(`${W} chips: Ful, Vegan, Open now, and Filters (n) count`, async () => {
     await page.click('#chipFul');
-    assert.deepEqual((await names()).sort(), ['Dobrá Čajovna', 'Falafelo', 'Kafka Hummus Café']);
+    assert.deepEqual((await names()).sort(), ['Dobrá Čajovna', 'Falafelo', 'Kafka Hummus Café', 'Mr. Falafel', 'The Eastern Bistro']);
     assert.equal(await page.locator('#chipFilters span').textContent(), 'Filters (1)');
     assert.equal(await page.locator('#chipFul').getAttribute('aria-pressed'), 'true');
     await page.click('#chipVegan');
-    assert.equal(await cards().count(), 3);
+    assert.equal(await cards().count(), 4);
     assert.equal(await page.locator('#chipFilters span').textContent(), 'Filters (2)');
     await page.click('#chipFul');
     await page.click('#chipVegan');
     await page.click('#chipOpen');
     await waitNames(['Amsterdam Grill', 'Dobrá Čajovna', 'Kafka Hummus Café', 'Kebab Deluxe HK', 'Kurdish grill', 'MUJ FALAFEL bistro', 'Mr. Falafel', 'Pizza & Kebap Globus', 'Prostě bistro!', 'Sayf']);
     await page.click('#chipOpen');
-    assert.equal(await cards().count(), 23);
+    assert.equal(await cards().count(), 29);
     assert.equal(await page.locator('#chipFilters span').textContent(), 'Filters');
   });
 
@@ -170,7 +170,7 @@ for (const width of [390, 1280]) {
     await page.click('#chipFilters');
     await page.click('#fClear');
     await page.click('#fApply');
-    await page.waitForFunction(() => document.querySelectorAll('#list .card').length === 23);
+    await page.waitForFunction(() => document.querySelectorAll('#list .card').length === 29);
   });
 
   await check(`${W} filter state lives in the URL and a shared link restores it`, async () => {
@@ -240,6 +240,26 @@ for (const width of [390, 1280]) {
     await page.click('#chipSaved');
   });
 
+  await check(`${W} place page shows the menu with prices, grouped hummus then ful`, async () => {
+    await page.goto(`${BASE}#/place/the-eastern-bistro`);
+    await page.locator('#placeTitle').waitFor();
+    const menu = page.locator('#placePane .menu');
+    assert.equal(await menu.locator('h2').textContent(), 'Menu');
+    assert.deepEqual(await menu.locator('.menu-group').allTextContents(), ['Hummus', 'Ful']);
+    assert.equal(await menu.locator('li').first().locator('.menu-name').textContent(), 'Hummus with warm pita & olive oil (180 g)');
+    assert.equal(await menu.locator('li').first().locator('.menu-price').textContent(), '170 Kč');
+    assert.match(await menu.textContent(), /Egyptian fava plate\s*324 Kč/);
+    assert.match(await menu.textContent(), /Prices checked 2026-11-02/);
+    assert.deepEqual(await page.locator('#placePane .tile span').allTextContents(), ['Hummus', 'Ful']);
+    await page.goto(`${BASE}#/place/damascus-restaurant`);
+    await page.locator('#placeTitle').waitFor();
+    assert.equal(await page.locator('#placePane .menu-group').count(), 0);
+    assert.equal(await page.locator('#placePane .menu-price').textContent(), 'Price not listed');
+    await page.goto(`${BASE}#/place/falafelo`);
+    await page.locator('#placeTitle').waitFor();
+    assert.equal(await page.locator('#placePane .menu').count(), 0);
+  });
+
   await check(`${W} back button returns to the list with its filters`, async () => {
     await page.goto(`${BASE}#/?dish=ful`);
     await cards().first().waitFor();
@@ -247,7 +267,7 @@ for (const width of [390, 1280]) {
     await page.locator('#placeTitle').waitFor();
     await page.locator('#backBtn').click();
     await page.waitForFunction(() => location.hash === '#/?dish=ful');
-    assert.equal(await cards().count(), 3);
+    assert.equal(await cards().count(), 5);
   });
 
   await check(`${W} unknown and unpublished places show "not found"; ?debug=1 shows all`, async () => {
@@ -257,7 +277,7 @@ for (const width of [390, 1280]) {
     await page.reload();
     await page.locator('#placePane .empty').waitFor();
     await page.goto(`${BASE}?debug=1#/`);
-    await page.waitForFunction(() => document.querySelectorAll('#list .card').length === 24);
+    await page.waitForFunction(() => document.querySelectorAll('#list .card').length === 30);
     assert.equal(await page.locator('#debugBanner').isVisible(), true);
     await page.goto(`${BASE}?debug=1#/place/leyaly`);
     await page.locator('#placeTitle').waitFor();
@@ -273,10 +293,10 @@ for (const width of [390, 1280]) {
     }
     await page.waitForFunction(() => window.hummus.state.mapApi?.map?.getLayer('points'), null, { timeout: 15000 });
     const count = async () => page.evaluate(async () => (await window.hummus.state.mapApi.map.getSource('places').getData()).features.length);
-    assert.equal(await count(), 3);
+    assert.equal(await count(), 5);
     if (width === 390) await page.click('#chipFul');
     else await page.click('#chipFul');
-    await page.waitForFunction(async () => (await window.hummus.state.mapApi.map.getSource('places').getData()).features.length === 23);
+    await page.waitForFunction(async () => (await window.hummus.state.mapApi.map.getSource('places').getData()).features.length === 29);
     const attribution = await page.locator('.maplibregl-ctrl-attrib').textContent();
     assert.match(attribution, /OpenFreeMap.*OpenMapTiles.*OpenStreetMap/);
     // מתקרבים לקפקא ולוחצים על הסמן
@@ -348,7 +368,7 @@ await check('[390px] a GeoPackage saved in WAL mode still loads in the browser',
   const logs = [];
   page.on('console', (m) => logs.push(m.text()));
   await page.goto(BASE);
-  await page.waitForFunction(() => document.querySelectorAll('#list .card').length === 23);
+  await page.waitForFunction(() => document.querySelectorAll('#list .card').length === 29);
   assert.ok(logs.some((l) => /WAL mode/.test(l)), 'WAL warning logged to the console');
   await context.close();
 });
@@ -365,7 +385,7 @@ await check('[1280px] admin-check.html lists data problems', async () => {
   assert.match(text, /FÉNIX.*דורס את ההמשך/s);
   assert.equal(await page.locator('#issues tr', { hasText: 'FÉNIX' }).filter({ hasText: 'דורס' }).count(), 1);
   assert.match(await page.locator('#candidates').textContent(), /Leyaly/);
-  assert.match(await page.locator('#summary').textContent(), /23מוצגים באתר/);
+  assert.match(await page.locator('#summary').textContent(), /29מוצגים באתר/);
   await page.screenshot({ path: join(SHOTS, 'admin-check.png'), fullPage: true });
   await context.close();
 });

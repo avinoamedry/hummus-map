@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import initSqlJs from 'sql.js';
-import { parseGpkgPoint, prepareSqliteBytes, readGpkg, isPublished, photoUrl, DataError } from '../js/data.js';
+import { parseGpkgPoint, prepareSqliteBytes, readGpkg, isPublished, photoUrl, formatPrice, DataError } from '../js/data.js';
 
 const GPKG = new URL('../data/hummus_app.gpkg', import.meta.url);
 const SQL = await initSqlJs();
@@ -49,7 +49,7 @@ test('empty geometry and null give null; bad magic throws', () => {
 
 test('readGpkg returns places, kashrut codes and photos', () => {
   const { places, kashrutTypes, warnings } = readGpkg(SQL, readFileSync(GPKG));
-  assert.equal(places.length, 24);
+  assert.equal(places.length, 30);
   assert.deepEqual(Object.keys(kashrutTypes).sort(), ['badatz', 'none', 'private', 'rabbanut', 'rabbanut_mehadrin', 'unknown']);
   const kafka = places.find((p) => p.slug === 'kafka-hummus-cafe');
   assert.deepEqual(kafka.lonlat, [14.418658, 50.089096]);
@@ -69,7 +69,7 @@ test('a WAL-mode header is patched in memory and still reads', () => {
   assert.equal(prepared.wal, true);
   assert.equal(prepared.bytes[18], 1);
   const { places, warnings } = readGpkg(SQL, bytes);
-  assert.equal(places.length, 24);
+  assert.equal(places.length, 30);
   assert.match(warnings[0], /WAL/);
 });
 
@@ -102,4 +102,38 @@ test('photos: main first, then sort_order; url can be a file name or a full URL'
   assert.equal(photoUrl('main.webp'), 'photos/main.webp');
   assert.equal(photoUrl('photos/main.webp'), 'photos/main.webp');
   assert.equal(photoUrl('https://example.org/a.jpg'), 'https://example.org/a.jpg');
+});
+
+test('menu items: grouped hummus → ful → other, attached to the place, ful item marks serves_ful', () => {
+  const { places, warnings } = readGpkg(SQL, readFileSync(GPKG));
+  const jer = places.find((p) => p.slug === 'jerusalem-prague');
+  assert.ok(jer.menu.length >= 7);
+  assert.equal(jer.menu[0].name, 'Hummus original');
+  assert.equal(jer.menu[0].price, 235);
+  const eastern = places.find((p) => p.slug === 'the-eastern-bistro');
+  assert.deepEqual([...new Set(eastern.menu.map((m) => m.dish))], ['hummus', 'ful']);
+  assert.equal(eastern.serves_ful, true);
+  const dam = places.find((p) => p.slug === 'damascus-restaurant');
+  assert.equal(dam.menu[0].price, null);
+  assert.ok(!warnings.some((w) => w.includes('menu_items')));
+});
+
+test('menu: bad dish value becomes other; old files without menu_items still load', () => {
+  const db = new SQL.Database(readFileSync(GPKG));
+  db.run(`INSERT INTO menu_items (item_id, place_id, dish, name, price) VALUES (900, 1, 'soup', 'Lentil soup', 89.5)`);
+  const r = readGpkg(SQL, db.export());
+  const kafka = r.places.find((p) => p.place_id === 1);
+  assert.equal(kafka.menu.find((m) => m.name === 'Lentil soup').dish, 'other');
+  assert.ok(r.warnings.some((w) => w.includes('soup')));
+  db.run('DROP TABLE menu_items');
+  const old = readGpkg(SQL, db.export());
+  assert.ok(old.places.every((p) => p.menu.length === 0));
+  assert.ok(!old.warnings.some((w) => w.includes('menu_items')));
+});
+
+test('formatPrice', () => {
+  assert.equal(formatPrice(235, 'CZK'), '235 Kč');
+  assert.equal(formatPrice(9.5, 'EUR'), '€9.50');
+  assert.equal(formatPrice(12, 'SEK'), '12 SEK');
+  assert.equal(formatPrice(null), '');
 });

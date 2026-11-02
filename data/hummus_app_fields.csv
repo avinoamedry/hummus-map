@@ -43,3 +43,13 @@ place_photos,sort_order,int,—,סדר בגלריה (swipe),מומלץ,ידני,
 place_photos,caption,str,—,—,רשות,ידני,
 place_photos,credit,str,—,—,מומלץ,ידני,צלם / רישיון
 place_photos,taken_date,date,—,—,רשות,ידני,
+menu_items,item_id,int,—,—,חובה,ידני,מפתח ייחודי
+menu_items,place_id,int,—,קישור למקום,חובה,ידני,place_id מ-hummus_places
+menu_items,dish,str,—,קבוצה בסעיף Menu,חובה,ידני,hummus / ful / mushrooms / other
+menu_items,name,str,—,שם המנה בסעיף Menu,חובה,ידני,
+menu_items,price,float,—,מחיר בסעיף Menu,מומלץ,ידני / אתר המסעדה,ריק = Price not listed
+menu_items,currency,str,—,סימן המטבע,רשות,ידני,ברירת מחדל CZK
+menu_items,description,str,—,שורה מתחת לשם המנה,רשות,ידני,
+menu_items,source_url,str,—,—,מומלץ,ידני,מקור המחיר; לא מוצג באתר
+menu_items,checked_date,date,—,Prices checked,מומלץ,ידני,
+menu_items,sort_order,int,—,סדר בתוך הקבוצה,רשות,ידני,

@@ -22,6 +22,10 @@ export const i18n = {
     since: (y) => `Hummus since ${y}`,
     serving: 'Serving',
     dishes: { hummus: 'Hummus', ful: 'Ful', mushrooms: 'Mushrooms' },
+    menuTitle: 'Menu',
+    menuGroups: { hummus: 'Hummus', ful: 'Ful', mushrooms: 'Mushrooms', other: 'Also on the menu' },
+    priceNA: 'Price not listed',
+    menuChecked: (d) => `Prices checked ${d}. They may have changed.`,
     dietary: 'Dietary',
     diet: {
       diet_vegan: ['Vegan', '100% Vegan'],

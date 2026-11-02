@@ -9,6 +9,8 @@ export const PLACE_FIELDS = [
   'kashrut_body', 'kashrut_checked', 'diet_halal', 'diet_gluten_free', 'opening_hours',
   'phone', 'instagram', 'website', 'osm_type', 'osm_id', 'source', 'last_checked',
 ];
+export const MENU_FIELDS = ['item_id', 'place_id', 'dish', 'name', 'price', 'currency', 'description', 'source_url', 'checked_date', 'sort_order'];
+export const MENU_DISHES = ['hummus', 'ful', 'mushrooms', 'other'];
 export const PHOTO_FIELDS = ['photo_id', 'place_id', 'url', 'is_main', 'sort_order', 'caption', 'credit', 'taken_date'];
 export const DIET_FIELDS = ['diet_vegan', 'diet_vegetarian', 'diet_kosher', 'diet_halal', 'diet_gluten_free'];
 export const DIET_VALUES = ['yes', 'no', 'only'];
@@ -120,6 +122,7 @@ export function normalizePlace(row, geomCol, warn) {
   }
   if (!p.slug && p.place_id !== null) p.slug = String(p.place_id);
   p.photos = [];
+  p.menu = [];
   return p;
 }
 
@@ -151,6 +154,8 @@ export function readGpkg(SQL, buffer) {
     const geomCol = geometryColumn(db, 'hummus_places');
     const places = selectAll(db, 'hummus_places', ['geom', ...PLACE_FIELDS], warn).map((r) => normalizePlace(r, geomCol, warn));
     const photos = selectAll(db, 'place_photos', PHOTO_FIELDS, warn);
+    // טבלת התפריט היא רשות: קובץ ישן בלעדיה עדיין נטען
+    const menu = tableColumns(db, 'menu_items') ? selectAll(db, 'menu_items', MENU_FIELDS, warn) : [];
     const kashrutTypes = Object.fromEntries(
       selectAll(db, 'kashrut_types', ['code', 'label_he'], warn)
         .filter((k) => !blank(k.code))
@@ -163,12 +168,31 @@ export function readGpkg(SQL, buffer) {
       if (!place || blank(ph.url)) continue;
       place.photos.push({ ...ph, url: String(ph.url).trim(), is_main: toBool(ph.is_main), sort_order: Number(ph.sort_order) || 0 });
     }
+    for (const m of menu) {
+      const place = byId.get(Number(m.place_id));
+      if (!place || blank(m.name)) continue;
+      let dish = str(m.dish) ? str(m.dish).toLowerCase() : 'other';
+      if (!MENU_DISHES.includes(dish)) {
+        warn(`menu item ${m.item_id} (${m.name}): dish="${m.dish}" is not ${MENU_DISHES.join('/')}, shown as other`);
+        dish = 'other';
+      }
+      const price = blank(m.price) || Number.isNaN(Number(m.price)) ? null : Number(m.price);
+      place.menu.push({
+        name: String(m.name).trim(), dish, price, currency: str(m.currency) || 'CZK',
+        description: str(m.description), checked_date: str(m.checked_date), sort_order: Number(m.sort_order) || 0,
+      });
+    }
     for (const p of places) {
+      const order = (m) => MENU_DISHES.indexOf(m.dish);
+      p.menu.sort((a, b) => order(a) - order(b) || a.sort_order - b.sort_order);
+      // מנה בתפריט מסמנת את המקום כמגיש אותה
+      if (p.menu.some((m) => m.dish === 'ful')) p.serves_ful = true;
+      if (p.menu.some((m) => m.dish === 'mushrooms')) p.serves_mushrooms = true;
       p.photos.sort((a, b) => b.is_main - a.is_main || a.sort_order - b.sort_order);
       p.mainPhoto = p.photos.find((ph) => ph.is_main) || p.photos[0] || null;
       p.kashrut = p.kashrut_type ? kashrutTypes[p.kashrut_type] || null : null;
     }
-    return { places, kashrutTypes, photos, warnings, wal };
+    return { places, kashrutTypes, photos, menu, warnings, wal };
   } finally {
     db.close();
   }
@@ -185,6 +209,16 @@ export async function loadData(url, initSqlJs) {
     }),
   ]);
   return readGpkg(SQL, buffer);
+}
+
+const CURRENCY_SIGN = { CZK: 'Kč', EUR: '€', GBP: '£', PLN: 'zł', HUF: 'Ft', CHF: 'CHF' };
+/** מחיר לתצוגה: "235 Kč", "€9.50". מטבע לא מוכר מוצג בקוד שלו. */
+export function formatPrice(price, currency = 'CZK') {
+  if (price === null || price === undefined) return '';
+  const c = String(currency || 'CZK').toUpperCase();
+  const num = Number.isInteger(price) ? String(price) : price.toFixed(2);
+  const sign = CURRENCY_SIGN[c] || c;
+  return ['EUR', 'GBP'].includes(c) ? `${sign}${num}` : `${num} ${sign}`;
 }
 
 /** כתובת תמונה: שם קובץ בתיקיית photos/ או כתובת מלאה. */

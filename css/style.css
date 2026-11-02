@@ -200,6 +200,14 @@ h1, h2 { margin: 0; }
   width: 104px; height: 112px; border-radius: var(--r-tile); background: var(--surface); border: 1.5px solid var(--line);
   display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; color: var(--accent);
 }
+.menu-group { font-size: 15px; font-weight: 700; margin: 6px 0 0; color: var(--muted); }
+.menu-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.menu-list li { display: flex; align-items: baseline; gap: 6px; font-size: 15px; }
+.menu-name { display: flex; flex-direction: column; min-width: 0; }
+.menu-name small { color: var(--muted); font-size: 13px; }
+.menu-dots { flex: 1; border-bottom: 1px dotted var(--chip-line); min-width: 12px; transform: translateY(-4px); }
+.menu-price { font-weight: 700; white-space: nowrap; }
+.menu-price.na { font-weight: 400; color: var(--muted); font-size: 13px; }
 .tile span { font-size: 14px; font-weight: 500; color: var(--text); }
 .diet-lg { font-size: 14px; padding: 8px 14px; border-radius: 16px; border: 1.5px solid var(--btn-line); color: var(--text); font-weight: 500; }
 .kashrut { font-size: 14px; color: var(--muted); line-height: 1.5; }
